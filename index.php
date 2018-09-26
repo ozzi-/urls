@@ -2,8 +2,16 @@
   // CHANGE THIS!
   $username = "shortener";
   $password = "letmein";
-  // USE ENTRY '*' for ALL
+  // IP WHITELIST FOR ADMIN FUNCTIONALITY - USE ENTRY '*' for ALL
   $whitelist = array('192.168.200.*','127.0.0.1');
+
+  header("X-Content-Type-Options: nosniff");
+  header("X-Frame-Options: DENY");
+  header("X-XSS-Protection: 1; mode=block");
+  header("Content-Security-Policy: default-src 'none';");
+  if(usingHTTPS()){
+    header("Strict-Transport-Security: max-age=2592000");
+  }
 
   session_start();
   if (empty($_SESSION['token'])) {
@@ -21,11 +29,13 @@
       die("This is not a valid URL");
     }else{
       header("Location: ?admin&highlight=".$res);
+      die();
     }
   // LOGOUT
   }elseif(isset($_POST["logout"])){
     checkLogin($whitelist);
     unset($_SESSION["loggedin"]);
+    die();
   // LOGIN
   }elseif(isset($_POST["usr"])&&isset($_POST["pwd"])){
     checkCSRF();
@@ -44,6 +54,8 @@
     checkCSRF();
     checkLogin($whitelist);
     deleteEntry($db,$_POST["delete"]);
+    header("Location: ?admin");
+    die();
   // ADMIN "DASHBOARD"
   }elseif(isset($_GET["admin"])){
     checkLogin($whitelist);
@@ -69,7 +81,7 @@
         echo($key." - ".$entry.' <a href="?'.$key.'">Short URL</a>');
       }
       ?>
-        <form method="POST">
+        <form method="POST" onsubmit="return confirm('Are you sure you want to delete this shortened URL?\n\rThis might break existing links.');">
           <input type="hidden" name="delete" value="<?= $key ?>">
           <input type="hidden" name="csrf" value="<?= $token ?>">
           <input type="submit" value="Delete">
@@ -192,5 +204,10 @@
       }
     }
     return false;
+  }
+
+  function usingHTTPS(){
+    return ( (! empty($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'] == 'https') ||
+    (! empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') || (! empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == '443') );
   }
 ?>
