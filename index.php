@@ -83,6 +83,8 @@
       $url = resolveURL($db,$code);
       if($url !== false){
         header("Location: ".$url);
+	header("Cache-Control: private, max-age=90");
+        header("Referrer-Policy: origin");
         die();
       }
     }
