@@ -10,4 +10,4 @@ https://yourpage.com/?UdOJK
 
 Using https://yourpage.com/?admin will allow you to log in and manage your short links (list, add, delete).
 
-![management interface](https://i.imgur.com/pReQfP0.png)
+![management interface](https://i.imgur.com/5ENbtvB.png)
