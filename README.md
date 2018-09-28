@@ -8,6 +8,6 @@ It will create short links containing a-zA-Z0-9 and of 5 characters length.
 Example shortened link:
 https://yourpage.com/?UdOJK
 
-Using https://yourpage.com/?admin will allow you to log in and manage your short links (list, add, delete).
+Using https://yourpage.com/?admin will allow you to log in and manage your short links (list, add, delete). Admin intrerface can be additionally protected by IP whitelisting. 
 
 ![management interface](https://i.imgur.com/5ENbtvB.png)
