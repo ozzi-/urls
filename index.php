@@ -4,6 +4,8 @@
   $password = "letmein";
   // USE ENTRY '*' for ALL
   $whitelist = array('192.168.200.*','127.0.0.1');
+  $actionColor = "#f29800";
+  $backgroundColor = "#efd6ac";
 
   header("X-Content-Type-Options: nosniff");
   header("X-Frame-Options: DENY");
@@ -13,6 +15,7 @@
     header("Strict-Transport-Security: max-age=2592000");
   }
 
+  ini_set( 'session.cookie_httponly', 1 );
   session_start();
   if (empty($_SESSION['token'])) {
     $_SESSION['token'] = bin2hex(random_bytes(32));
@@ -38,6 +41,7 @@
   }elseif(isset($_POST["logout"])){
     checkLogin($whitelist);
     unset($_SESSION["loggedin"]);
+    session_destroy();
     outputSkeleton();
     outputError("You have been logged out");
     outputSkeletonEnd();
@@ -83,7 +87,7 @@
       $url = resolveURL($db,$code);
       if($url !== false){
         header("Location: ".$url);
-	header("Cache-Control: private, max-age=90");
+        header("Cache-Control: private, max-age=90");
         header("Referrer-Policy: origin");
         die();
       }
@@ -201,6 +205,8 @@
   }
 
   function outputSkeleton(){
+    global $backgroundColor;
+    global $actionColor;
     ?>
     <!DOCTYPE html>
     <html lang="en">
@@ -227,7 +233,8 @@
           font-family: Helvetica
         }
         hr{
-          color: black;
+          color: <?= $backgroundColor ?>;
+          margin-top: 20px;
         }
         .hand {
           cursor:pointer;
@@ -243,19 +250,24 @@
           background-color: #fff;
           background-image: none;
           background-clip: padding-box;
-          border: 1px solid #ced4da;
+          border: 1px solid #abb0b5;
           border-radius: .25rem;
           transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
           box-sizing: border-box;
         }
+	.action{
+          background-color :<?= $actionColor ?> !important;
+        }
         .content{
+          border-radius: 10px;
           margin-top: 20px;
           padding-top: 20px;
           padding-bottom: 20px;
           margin-left: 20vw;
           margin-right: 20vw;
-          background: #fcf1d9;
-
+          border-color: <?= $backgroundColor ?>;
+          border-frame: 2px;
+          border-style: solid;
         }
         .innercontent{
           margin-left: 10vw;
@@ -299,7 +311,7 @@
         <form method="POST">
           <input type="text" name="url" placeholder="https://www.long.url.com/"><br>
           <input type="hidden" name="csrf" value="<?= $token ?>">
-          <input type="submit" class="hand" value="Shorten URL">
+          <input type="submit" class="hand action" value="Shorten URL">
         </form>
         </td><td>
           <div style="width:20px"></div>
@@ -315,7 +327,7 @@
         </form>
         </td></tr>
       </table>
-      <hr><br>
+      <hr noshade><br>
     <?php
   }
 
@@ -323,12 +335,12 @@
     global $token;
     ?>
       <form method="GET" action="<?= $entry ?>">
-        <input type="submit" class="hand" style="text-align: left; <?php if($highlight){ echo('background-color:grey;'); }?>" value="&#128279; <?= $key ?> | <?= $entry ?>">
+        <input type="submit" class="hand action" style="text-align: left; <?php if($highlight){ echo('background-color:grey;'); }?>" value="<?= $key ?> | <?= $entry ?>">
       </form>
       <table>
         <tr><td>
         <button class="hand clipboard" data-clipboard-text="<?= getCurrentURL()."?".$key ?>">
-          &#x2398 Copy Short URL
+          Copy Short URL
         </button>
         </td><td>
         <form method="POST" onsubmit="return confirm('Are you sure you want to delete this shortened URL?\n\rThis might break existing links.');">
