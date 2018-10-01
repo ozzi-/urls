@@ -10,4 +10,10 @@ https://yourpage.com/?UdOJK
 
 Using https://yourpage.com/?admin will allow you to log in and manage your short links (list, add, delete). Admin intrerface can be additionally protected by IP whitelisting. 
 
+# Screenshots
+Management Interface:
 ![management interface](https://i.imgur.com/5ENbtvB.png)
+
+
+Login:
+![management interface](https://i.imgur.com/0rgOnXe.png)
