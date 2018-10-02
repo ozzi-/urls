@@ -6,6 +6,7 @@
   $whitelist = array('192.168.200.*','127.0.0.1');
   $actionColor = "#f29800";
   $backgroundColor = "#efd6ac";
+  $demoMode = false;
 
   header("X-Content-Type-Options: nosniff");
   header("X-Frame-Options: DENY");
@@ -93,10 +94,16 @@
     if($code!=""){
       $url = resolveURL($db,$code);
       if($url !== false){
-        header("Location: ".$url);
-        header("Cache-Control: private, max-age=90");
-        header("Referrer-Policy: origin");
-        die();
+        if($demoMode){
+          $url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+          die("<h3>Demo Mode is active</h3><br>Otherwise I would redirect you to <b>".$url."</b>");
+        }else{
+          header("Location: ".$url);
+          // From PHP 4.4.2 and 5.1.2 on header injections are not possible anymore
+          header("Cache-Control: private, max-age=90");
+          header("Referrer-Policy: origin");
+          die();
+        }
       }
     }
   }
@@ -341,13 +348,17 @@
   function outputEntry($key,$entry,$highlight){
     global $token;
     global $backgroundColor;
+    $currentURL = getCurrentURL();
+    $shortURL = getCurrentURL()."?".$key;
+    $entry = htmlspecialchars($entry, ENT_QUOTES, 'UTF-8');
     ?>
-      <form method="GET" action="<?= $entry ?>">
+      <form method="GET" action="<?= $currentURL ?>">
+        <input type="hidden" name="<?= $key ?>">
         <input type="submit" class="hand action" style="text-align: left; <?php if($highlight){ echo('background-color: '.$backgroundColor.' !important;'); }?>" value="<?= $key ?> | <?= $entry ?>">
       </form>
       <table>
         <tr><td>
-        <button class="hand clipboard" data-clipboard-text="<?= getCurrentURL()."?".$key ?>">
+        <button class="hand clipboard" data-clipboard-text="<?= $shortURL ?>">
           Copy Short URL
         </button>
         </td><td>
