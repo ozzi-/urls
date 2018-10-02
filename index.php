@@ -7,6 +7,7 @@
   $actionColor = "#f29800";
   $backgroundColor = "#efd6ac";
   $demoMode = false;
+  $shortCodeLength = 4;
 
   header("X-Content-Type-Options: nosniff");
   header("X-Frame-Options: DENY");
@@ -31,7 +32,7 @@
     $res = addEntry($db,$_POST["url"]);
     if($res == false){
       outputSkeleton();
-      outputError("This is not a valid URL");
+      outputError("This is not a valid URL",true);
       outputSkeletonEnd();
       die();
     }else{
@@ -158,14 +159,25 @@
   }
 
   function getShortCode($db){
+    $i = 0;
     do{
       $code = generateRandomString();
+      $i++;
+      if($i>100){
+        die("Cannot generate short code. Increase $shortCodeLength");
+      }
     } while (array_key_exists($code,$db));
     return $code;
   }
 
-  function generateRandomString($length = 5) {
-    return substr(str_shuffle(str_repeat($x='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil($length/strlen($x)) )),1,$length);
+  function generateRandomString() {
+    global $shortCodeLength;
+    $shortCodeLength = $shortCodeLength<2 ? 2 : $shortCodeLength;
+    return substr(str_shuffle(str_repeat(
+                 $x='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+                 ceil($shortCodeLength/strlen($x)))),
+                 1,
+                 $shortCodeLength);
   }
 
   function saveDB($db){
@@ -197,7 +209,6 @@
     fwrite($dbf, "{}");
     fclose($db);
   }
-
 
   function isAllowed($ip,$whitelist){
     if(in_array($ip, $whitelist)){
