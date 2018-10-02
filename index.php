@@ -77,6 +77,13 @@
     foreach ($db as $key=>$entry) {
       outputEntry($key,$entry,isset($_GET["highlight"]) && $key===$_GET["highlight"]);
     }
+    if(isset($_GET["highlight"])){
+      ?>
+      <script>
+          window.scrollTo(0,document.body.scrollHeight);
+      </script>
+      <?php
+    }
     outputSkeletonEnd();
     die();
   // RESOLVE SHORT CODE IF EXISTS
@@ -333,9 +340,10 @@
 
   function outputEntry($key,$entry,$highlight){
     global $token;
+    global $backgroundColor;
     ?>
       <form method="GET" action="<?= $entry ?>">
-        <input type="submit" class="hand action" style="text-align: left; <?php if($highlight){ echo('background-color:grey;'); }?>" value="<?= $key ?> | <?= $entry ?>">
+        <input type="submit" class="hand action" style="text-align: left; <?php if($highlight){ echo('background-color: '.$backgroundColor.' !important;'); }?>" value="<?= $key ?> | <?= $entry ?>">
       </form>
       <table>
         <tr><td>
