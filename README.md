@@ -10,6 +10,10 @@ hxxps://yourpage.com/?UdOJK
 Using hxxps://yourpage.com/?admin will allow you to log in and manage your short links (list, add, delete).
 The admin interface can be additionally protected by IP whitelisting. 
 
+## Demo
+You can find a demo instance here, login with username "shortener" and "letmein" as a password:
+https://oz-web.com/urls/?admin
+
 ## Installation
 0. Clone repo
 1. Check that your webserver respects the .htaccess file and does not serve db.json (otherwise you will leak all shortlinks)
