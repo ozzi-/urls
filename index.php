@@ -8,6 +8,7 @@
   $backgroundColor = "#efd6ac";
   $demoMode = false;
   $shortCodeLength = 4;
+  $dbPath = "db.json";
 
   header("X-Content-Type-Options: nosniff");
   header("X-Frame-Options: DENY");
@@ -185,22 +186,22 @@
   }
 
   function saveDB($db){
-    $dbfp = "db.json";
+    global $dbPath;
     $json_data = json_encode($db);
-    $res = file_put_contents($dbfp, $json_data);
+    $res = file_put_contents($dbPath, $json_data);
     if(!$res){
       die("Error saving DB");
     }
   }
 
   function loadDB(){
-    $dbfp = "db.json";
-    $dbf = fopen($dbfp, "r");
+    global $dbPath;
+    $dbf = fopen($dbPath, "r");
     if($dbf == null){
-      createDB($dbfp);
-      $dbf = fopen($dbfp, "r");
+      createDB($dbPath);
+      $dbf = fopen($dbPath, "r");
     }
-    $json = json_decode(fread($dbf,filesize($dbfp)),true);
+    $json = json_decode(fread($dbf,filesize($dbPath)),true);
     if(json_last_error()!==JSON_ERROR_NONE){
       die("Error reading DB (".json_last_error().")");
     }
