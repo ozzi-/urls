@@ -1,19 +1,29 @@
 <?php
-  // CHANGE THIS!
+  // Change the credentials!
   $username = "shortener";
   $password = "letmein";
-  // USE ENTRY '*' for ALL
+
+  // Here you can define whitelisted IPs that are allowed to use the admin interface & the API
+  // If you wish to permit all IPs, simply add '*' to the array
   $whitelist = array('192.168.200.*','127.0.0.1');
+
+  // Customization
   $actionColor = "#f29800";
   $backgroundColor = "#efd6ac";
-  $demoMode = false;
   $shortCodeLength = 4;
   $dbPath = "db.json";
+
+  // Enabling demo mode will only show a preview of the target URL
+  $demoMode = false;
+
+  // No configuration below this line needed
+  // -----------------------------------------------------------------------------------------------
 
   header("X-Content-Type-Options: nosniff");
   header("X-Frame-Options: DENY");
   header("X-XSS-Protection: 1; mode=block");
   header("Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'");
+
   if(usingHTTPS()){
     header("Strict-Transport-Security: max-age=2592000");
   }
@@ -27,13 +37,14 @@
       $_SESSION['token'] = bin2hex(openssl_random_pseudo_bytes(32));
     }
   }
+
   $token = $_SESSION['token'];
   $db = loadDB();
 
   // ADDING URL
-  if(isset($_POST["url"])){
+  if(isset($_POST["url"]) && !isset($_POST["api"])){
     checkCSRF();
-    checkLogin($whitelist);
+    checkLogin();
     $res = addEntry($db,$_POST["url"]);
     if($res == false){
       outputSkeleton();
@@ -44,9 +55,26 @@
       header("Location: ?admin&highlight=".$res);
       die();
     }
+  // API
+  }elseif(isset($_POST["api"])){
+    $action = $_POST["api"];
+    header('Content-Type: application/json');
+    checkLoginAPI();
+      if($action==="addurl" && isset($_POST["url"])){
+        $res = addEntry($db,$_POST["url"]);
+        echo(json_encode(array('code'=>$res),JSON_UNESCAPED_SLASHES));
+      }elseif($action==="delurl" && isset($_POST["code"])){
+        $res = deleteEntry($db,$_POST["code"]);
+        echo(json_encode(array('success'=>$res),JSON_UNESCAPED_SLASHES));
+      }elseif($action==="listurls"){
+        echo (json_encode($db,JSON_UNESCAPED_SLASHES));
+      }elseif($action==="getpath"){
+        echo (json_encode(array('path'=>getCurrentURL()),JSON_UNESCAPED_SLASHES));
+      }
+    die();
   // LOGOUT
   }elseif(isset($_POST["logout"])){
-    checkLogin($whitelist);
+    checkLogin();
     unset($_SESSION["loggedin"]);
     session_destroy();
     outputSkeleton();
@@ -72,13 +100,13 @@
   // DELETE URL
   }elseif(isset($_POST["delete"])){
     checkCSRF();
-    checkLogin($whitelist);
+    checkLogin();
     deleteEntry($db,$_POST["delete"]);
     header("Location: ?admin");
     die();
   // ADMIN "DASHBOARD"
   }elseif(isset($_GET["admin"])){
-    checkLogin($whitelist);
+    checkLogin();
     outputSkeleton();
     outputAdmin();
     foreach ($db as $key=>$entry) {
@@ -124,7 +152,8 @@
     }
   }
 
-  function checkLogin($whitelist){
+  function checkLogin(){
+    global $whitelist;
     if(!$_SESSION["loggedin"]){
       if(!isAllowed($_SERVER['REMOTE_ADDR'],$whitelist)){
         outputSkeleton();
@@ -135,6 +164,23 @@
       outputSkeleton();
       outputLoginForm();
       outputSkeletonEnd();
+      die();
+    }
+  }
+
+  function checkLoginAPI(){
+    global $username, $password, $whitelist;
+    $ok = false;
+    if(isAllowed($_SERVER['REMOTE_ADDR'],$whitelist)){
+      if(isset($_POST["usr"]) && isset($_POST["pwd"])){
+        $usrok = hash_equals($_POST["usr"],$username);
+        $pwdok = hash_equals($_POST["pwd"],$password);
+        $ok = $usrok && $pwdok;
+      }
+    }
+    if(!$ok){
+      http_response_code(403);
+      echo "You are not allowed to access this page";
       die();
     }
   }
@@ -157,10 +203,13 @@
   }
 
   function deleteEntry(&$db,$code){
+    $pre = sizeof($db);
     if(isset($db[$code])){
       unset($db[$code]);
       saveDB($db);
     }
+    $post = sizeof($db);
+    return $post<$pre;
   }
 
   function getShortCode($db){
@@ -391,7 +440,7 @@
 
   function getCurrentURL(){
     $protocol = usingHTTPS()?"https://":"http://";
-    return $protocol.$_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF']."KEK");
+    return $protocol.$_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF']);
   }
 
   function outputError($errorstrng,$goTo=false){
