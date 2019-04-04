@@ -24,7 +24,13 @@ https://oz-web.com/urls/?admin
 
 ## Screenshots
 Management Interface:
-![management interface](https://i.imgur.com/5ENbtvB.png)
+![management interface](https://i.imgur.com/cQJeeJM.png)
+
+Creating QR Codes on the fly:
+![QR Code](https://i.imgur.com/a1G1uXu.png)
+
+Search function:
+![Search Bar](https://i.imgur.com/tUaIZUu.png)
 
 Login:
 ![management interface](https://i.imgur.com/0rgOnXe.png)
