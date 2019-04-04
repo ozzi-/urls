@@ -45,7 +45,7 @@ curl -X POST http://demo.local.ch/urls/index.php -d "api=addurl&url=http://examp
 
 List all shortened URLs:
 ```
-curl -X POST http://demo.local.churls/index.php -d "api=listurls&usr=shortener&pwd=letmein"
+curl -X POST http://demo.local.ch/urls/index.php -d "api=listurls&usr=shortener&pwd=letmein"
 
 {"cs5G":"http://example2.com","8TRL":"http://somewebsite.ch","e2XK":"http://github.com","CiuZ":"http://example.com"}
 ```
