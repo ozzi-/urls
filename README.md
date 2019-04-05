@@ -24,16 +24,16 @@ https://oz-web.com/urls/?admin
 
 ## Screenshots
 Management Interface:
-![management interface](https://i.imgur.com/cQJeeJM.png)
+![management interface](https://i.imgur.com/VRzoncq.png)
 
 Creating QR Codes on the fly:
-![QR Code](https://i.imgur.com/a1G1uXu.png)
+![QR Code](https://i.imgur.com/QSuePMc.png)
 
 Search function:
-![Search Bar](https://i.imgur.com/tUaIZUu.png)
+![Search Bar](https://i.imgur.com/J7ilxou.png)
 
 Login:
-![management interface](https://i.imgur.com/0rgOnXe.png)
+![login](https://i.imgur.com/0rgOnXe.png)
 
 ## API
 Shorten a new URL to be shortened:
