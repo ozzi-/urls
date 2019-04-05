@@ -94,18 +94,22 @@
     checkLogin();
     outputSkeleton();
     outputAdmin();
-    ?> <div id="codes">   <input class="search" placeholder="Search" /> <ul style="list-style-type:none" class="list"> <?php
-    foreach ($db as $key=>$entry) {
+    ?> <div id="codes">
+     <table><tr><td>
+     <input class="search" size="30" placeholder="Search" />
+     </td><td>
+       <button stlye="cursor: pointer;" id="sortbtn" class="sort" data-sort="searchable_ts">
+         Sort by Creation Date
+       </button>
+     </td>
+     </table>
+     <ul style="list-style-type:none" class="list"> <?php
+    foreach ($db as $entry) {
       echo ("<li>");
-      outputEntry($key,$entry,isset($_GET["highlight"]) && $key===$_GET["highlight"]);
+      outputEntry($entry,$_GET["highlight"]);
       echo ("</li>");
     }
     ?> </ul></div> <?php
-    if(isset($_GET["highlight"])){ ?>
-      <script>
-        window.scrollTo(0,document.body.scrollHeight);
-      </script> <?php
-    }
     outputSkeletonEnd();
     die();
   // RESOLVE SHORT CODE IF EXISTS
@@ -176,8 +180,10 @@
   }
 
   function resolveURL($db,$code){
-    if(isset($db[$code])){
-      return $db[$code];
+    foreach ($db as $entry) {
+      if($entry["code"] === $code){
+        return $entry["url"];
+      }
     }
     return false;
   }
@@ -187,19 +193,27 @@
       return false;
     }
     $code=getShortCode($url);
-    $db[$code] = $url;
+    $entry = array();
+    $entry["code"]=$code;
+    $entry["url"]=$url;
+    $entry["timestamp"]=time();
+    array_push($db, $entry);
     saveDB($db);
     return $code;
   }
 
   function deleteEntry(&$db,$code){
     $pre = sizeof($db);
-    if(isset($db[$code])){
-      unset($db[$code]);
-      saveDB($db);
+    foreach ($db as $i => $entry) {
+      if($entry["code"]===$code){
+        unset($db[$i]);
+        $db=array_values($db);
+        saveDB($db);
+        $post = sizeof($db);
+        return $post<$pre;
+      }
     }
-    $post = sizeof($db);
-    return $post<$pre;
+    return false;
   }
 
   function getShortCode($db){
@@ -227,9 +241,12 @@
   function saveDB($db){
     global $dbPath;
     $json_data = json_encode($db);
+    if(! is_writable($dbPath)){
+      die("Error saving DB - not writable");
+    }
     $res = file_put_contents($dbPath, $json_data);
     if(!$res){
-      die("Error saving DB");
+      die("Error saving DB - unknown");
     }
   }
 
@@ -240,17 +257,34 @@
       createDB($dbPath);
       $dbf = fopen($dbPath, "r");
     }
-    $json = json_decode(fread($dbf,filesize($dbPath)),true);
+    $raw = fread($dbf,filesize($dbPath));
+    $firstRaw = substr($raw,0,1);
+    $json = json_decode($raw,true);
     if(json_last_error()!==JSON_ERROR_NONE){
       die("Error reading DB (".json_last_error().")");
+    }
+    if($firstRaw === "{"){
+      $json = migrateOldFormat($json);
     }
     fclose($dbf);
     return $json;
   }
 
+  function migrateOldFormat($old){
+    $migrated = array();
+    foreach ($old as $code => $url) {
+      $entry = array();
+      $entry["code"]=$code;
+      $entry["url"]=$url;
+      $entry["timestamp"]=1546300800;
+      array_push($migrated, $entry);
+    }
+    return $migrated;
+  }
+
   function createDB($dbfp){
     $dbf = fopen($dbfp, 'w') or die('Cannot create db');
-    fwrite($dbf, "{}");
+    fwrite($dbf, "[]");
     fclose($db);
   }
 
@@ -327,7 +361,29 @@
           margin-left: 10vw;
           margin-right: 10vw;
         }
-        .modal {
+        .asc::after {
+          width: 0;
+          height: 0;
+          border-left: 4px solid transparent;
+          border-right: 4px solid transparent;
+          border-top: 4px solid #2e2e2e;
+          content: "";
+          position: relative;
+          top: 11px;
+          right: -4px;
+       }
+       .desc::after {
+         width: 0;
+         height: 0;
+         border-left: 4px solid transparent;
+         border-right: 4px solid transparent;
+         border-bottom: 4px solid #2e2e2e;
+         content: "";
+         position: relative;
+         top: -9px;
+         right: -4px;
+       }
+       .modal {
           display: none; /* Hidden by default */
           position: fixed; /* Stay in place */
           z-index: 1; /* Sit on top */
@@ -390,9 +446,21 @@
 
       window.onload = function () {
         var options = {
-         valueNames: [ 'searchable' ]
+         valueNames: [ 'searchable','searchable_ts' ]
         };
         var userList = new List('codes', options);
+
+        document.getElementById("sortbtn").click();
+        document.getElementById("sortbtn").click();
+
+        var timestamps = document.getElementsByClassName("timestamp");
+        for(i=0; i < timestamps.length; i++){
+          var timestamp = timestamps[i];
+          var timestampvalue = timestamp.innerHTML;
+          var date = new Date(timestampvalue * 1000);
+          var timestring = date.getFullYear()+"/"+("0"+(date.getMonth()+1)).slice(-2)+"/"+("0"+date.getDate()).slice(-2)+" "+("0"+date.getHours()).slice(-2)+":"+("0"+date.getMinutes()).slice(-2)+":"+("0"+date.getSeconds()).slice(-2);
+          timestamp.innerHTML = timestring;
+        }
 
         var modal = document.getElementById("qrmodal");
         var btns = document.getElementsByClassName("qrmodalbtn");
@@ -484,16 +552,21 @@
     <?php
   }
 
-  function outputEntry($key,$entry,$highlight){
+  function outputEntry($entry,$highlight){
     global $token;
     global $backgroundColor;
     $currentURL = getCurrentURL();
-    $shortURL = getCurrentURL()."?".$key;
-    $entry = htmlspecialchars($entry, ENT_QUOTES, 'UTF-8'); ?>
-    <span style="visibility: hidden;" class="searchable"><?= $key.$entry ?></span>
+    $code = $entry["code"];
+    $url = $entry["url"];
+    $timestamp = $entry["timestamp"];
+    $highlight = isset($highlight) && $highlight === $code;
+    $shortURL = getCurrentURL()."?".$code;
+    $url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8'); ?>
+    <span style="display: none;" class="searchable"><?= $code.$url ?></span>
+    <span style="display: none;" class="searchable_ts"><?= $timestamp ?></span>
     <form method="GET" action="<?= $currentURL ?>">
-      <input type="hidden" name="<?= $key ?>">
-      <input type="submit" class="hand action" style="text-align: left; <?php if($highlight){ echo('background-color: '.$backgroundColor.' !important;'); }?>" value="<?= $key ?> | <?= $entry ?>">
+      <input type="hidden" name="<?= $code ?>">
+      <input type="submit" class="hand action" style="text-align: left; <?php if($highlight){ echo('background-color: '.$backgroundColor.' !important;'); }?>" value="<?= $code ?> | <?= $url ?>">
     </form>
     <table>
       <tr><td>
@@ -501,15 +574,19 @@
           Copy Short URL
         </button>
       </td><td>
-        <button class="hand qrmodalbtn" onclick="fillModal('<?= getCurrentURL()."?".$key ?>')">
+        <button class="hand qrmodalbtn" onclick="fillModal('<?= getCurrentURL()."?".$code ?>')">
           QR
         </button>
       </td><td>
         <form method="POST" onsubmit="return confirm('Are you sure you want to delete this shortened URL?\n\rThis might break existing links.');">
-          <input type="hidden" name="delete" value="<?= $key ?>">
+          <input type="hidden" name="delete" value="<?= $code ?>">
           <input type="hidden" name="csrf" value="<?= $token ?>">
           <input type="submit" class="hand" value="&#128465;">
         </form>
+      </td><td>
+        <button>
+          <span class="timestamp"><?= $timestamp ?></span>
+        </button>
       </td></tr>
     </table>
     <br><br>
