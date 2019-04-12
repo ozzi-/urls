@@ -5,11 +5,11 @@
 
   // Here you can define whitelisted IPs that are allowed to use the admin interface & the API
   // If you wish to permit all IPs, simply add '*' to the array
-  $whitelist = array('192.168.200.*','127.0.0.1');
+  $whitelist = array('192.168.1.*','127.0.0.1');
 
   // Customization
   $actionColor = "#f29800";
-  $backgroundColor = "#efd6ac";
+  $highlightColor = "#ffb944";
   $shortCodeLength = 4;
   $dbPath = "db.json";
   $qrDimension = "256";
@@ -33,7 +33,7 @@
     $res = addEntry($db,$_POST["url"]);
     if($res == false){
       outputSkeleton();
-      outputError("This is not a valid URL",true);
+      outputError("Please enter a valid URL",true);
       outputSkeletonEnd();
       die();
     }else{
@@ -95,14 +95,18 @@
     outputSkeleton();
     outputAdmin();
     ?> <div id="codes">
-     <table><tr><td>
-     <input class="search" size="30" placeholder="Search" />
-     </td><td>
-       <button stlye="cursor: pointer;" id="sortbtn" class="sort" data-sort="searchable_ts">
-         Sort by Creation Date
-       </button>
-     </td>
-     </table>
+      <table style="width:100%;">
+        <tr><td style="width:50%;">
+          <input class="search" size="30" placeholder="Search" />
+        </td><td>
+          <div style="width:20px;"></div>
+        </td><td>
+         <button style="cursor: pointer;" id="sortbtn" class="sort" data-sort="searchable_ts">
+           Sort by Creation Date
+         </button>
+        </td></tr>
+      </table>
+
      <ul style="list-style-type:none" class="list"> <?php
     foreach ($db as $entry) {
       echo ("<li>");
@@ -308,7 +312,7 @@
   }
 
   function outputSkeleton(){
-    global $backgroundColor;
+    global $highlightColor;
     global $actionColor;
     global $qrDimension; ?>
     <!DOCTYPE html>
@@ -317,17 +321,27 @@
       <meta charset="UTF-8">
       <title>URLS</title>
       <style>
-        html *{
-          font-family: Helvetica
+        html{
+          font-family: Helvetica;
+          background: #EEEEEE;
         }
         hr{
-          color: <?= $backgroundColor ?>;
+          color: #DDDDDD;
           margin-top: 20px;
         }
         .hand {
           cursor:pointer;
+          background-color: #DDDDDD;
         }
-        input, button{
+        ul{
+          list-style-type: none;
+          padding-left: 0;
+        }
+        input:focus {
+          background-color: #f2f2f2;
+          border: 1px solid #DDDDDD;
+        }
+        input{
           width:100%;
           padding: 5px;
           display: block;
@@ -338,10 +352,29 @@
           background-color: #fff;
           background-image: none;
           background-clip: padding-box;
-          border: 1px solid #abb0b5;
-          border-radius: .25rem;
+          border: 0px;
           transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
           box-sizing: border-box;
+          background: #EEEEEE;
+        }
+        .timestamp{
+          color: black;
+        }
+        button{
+          width:100%;
+          padding: 5px;
+          display: block;
+          padding: .375rem .75rem;
+          font-size: 1rem;
+          line-height: 1.5;
+          color: #495057;
+          background-color: #fff;
+          background-image: none;
+          background-clip: padding-box;
+          border: 0px;
+          transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+          box-sizing: border-box;
+          background: #DDDDDD;
         }
         .action{
           background-color :<?= $actionColor ?> !important;
@@ -353,13 +386,18 @@
           padding-bottom: 20px;
           margin-left: 20vw;
           margin-right: 20vw;
-          border-color: <?= $backgroundColor ?> !important;
-          border: 2px;
+          border-color: #3d3c3c !important;
+          border: 0px;
           border-style: solid;
+          background: #FFFFFF;
+          -webkit-box-shadow: 5px 5px 5px 0px rgba(0,0,0,0.2);
+          -moz-box-shadow: 5px 5px 5px 0px rgba(0,0,0,0.2);
+          box-shadow: 5px 5px 5px 0px rgba(0,0,0,0.2);
         }
         .innercontent{
           margin-left: 10vw;
           margin-right: 10vw;
+          background: #FFFFFF;
         }
         .asc::after {
           width: 0;
@@ -399,13 +437,13 @@
         .modal-content {
           background-color: #fefefe;
           margin: auto;
-          padding: 20px;
+          padding: 10px;
           border: 1px solid #888;
-          width: <?= $qrDimension+30 ?>px;
+          width: <?= $qrDimension+25 ?>px;
           height: <?= $qrDimension ?>px;
         }
         .close {
-          color: #aaaaaa;
+          color: #666;
           float: right;
           font-size: 28px;
           font-weight: bold;
@@ -456,10 +494,10 @@
         var timestamps = document.getElementsByClassName("timestamp");
         for(i=0; i < timestamps.length; i++){
           var timestamp = timestamps[i];
-          var timestampvalue = timestamp.innerHTML;
+          var timestampvalue = timestamp.value;
           var date = new Date(timestampvalue * 1000);
           var timestring = date.getFullYear()+"/"+("0"+(date.getMonth()+1)).slice(-2)+"/"+("0"+date.getDate()).slice(-2)+" "+("0"+date.getHours()).slice(-2)+":"+("0"+date.getMinutes()).slice(-2)+":"+("0"+date.getSeconds()).slice(-2);
-          timestamp.innerHTML = timestring;
+          timestamp.value = timestring;
         }
 
         var modal = document.getElementById("qrmodal");
@@ -494,8 +532,8 @@
       </script>
       <div id="qrmodal" class="modal">
         <div id="qrmodalcontent" class="modal-content">
-          <span id="qrmodalcode"></span>
           <span id="qrclose" class="close">&times;</span>
+          <span id="qrmodalcode"></span>
           <p></p>
         </div>
       </div>
@@ -513,14 +551,16 @@
 
   function outputLoginForm(){
     global $token; ?>
+    <br>
     <form method="POST">
       <input type="text" name="usr" placeholder="Username">
       <br><br>
       <input type="password" name="pwd" placeholder="Password">
       <br><br>
       <input type="hidden" name="csrf" value="<?= $_SESSION["token"] ?>">
-      <input type="submit" value="Login">
+      <input type="submit" class="action" value="Login">
     </form>
+    <br>
     <?php
   }
 
@@ -554,7 +594,7 @@
 
   function outputEntry($entry,$highlight){
     global $token;
-    global $backgroundColor;
+    global $highlightColor;
     $currentURL = getCurrentURL();
     $code = $entry["code"];
     $url = $entry["url"];
@@ -564,29 +604,29 @@
     $url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8'); ?>
     <span style="display: none;" class="searchable"><?= $code.$url ?></span>
     <span style="display: none;" class="searchable_ts"><?= $timestamp ?></span>
-    <form method="GET" action="<?= $currentURL ?>">
+    <form method="GET" style="margin: 2px;" action="<?= $currentURL ?>">
       <input type="hidden" name="<?= $code ?>">
-      <input type="submit" class="hand action" style="text-align: left; <?php if($highlight){ echo('background-color: '.$backgroundColor.' !important;'); }?>" value="<?= $code ?> | <?= $url ?>">
+      <input type="submit" class="hand action" style="text-align: left; <?php if($highlight){ echo('background-color: '.$highlightColor.' !important;'); }?>" value="<?= $code ?> | <?= $url ?>">
     </form>
     <table>
       <tr><td>
-        <button class="hand clipboard" data-clipboard-text="<?= $shortURL ?>">
-          Copy Short URL
+        <button title="Copy short URL" class="hand clipboard" data-clipboard-text="<?= $shortURL ?>">
+          <img style="width:17px;; height:17px;;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAC4jAAAuIwF4pT92AAAAB3RJTUUH4wQMDS0XSHOWjwAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAJcSURBVEjHtZcxaxRBFIC/nImRkKSwsRGDIhZygmYThZSSoIIoIjZesLDVzsoiCKIcFgpWFhowQkDwBwQk5LAQBEHkxEIUqwRUkLinBM9cbm3ewnNuZnbmEh+8Y3bm7Xz33rx9+xb+lQR4ArwD1oGsQD8BZTplELgKzACTFEgVaAfATF0w9rkIpIbNF6DigmZd6mW1z3SB7SOgB/lJgNf5hIT4LvAGaBZEKQVeyLgCzAHb5PolUJP5veqeG8BN5Ezzf/QHGCVepoGW2mcJGJC1EjCr1lrACJJI+WS1S2jmgGp5rmzuY2TvhUhoxeOpKSeVXa0E9KrFZiS4DvyScQ04Daw5bH+bEzpMZ7oI9SHgmXiayLN7wLDZDXxUnNluwBVg3jI/AazKPnUPdBXYFwvW2fsU6LNAM+CVA5oC47GhdmXvhORGprzdY4F+B47GnrEre01PPzugqQkNAbuKw4gFulPuKQM/bOENBZ/zFIfEEl4z2z/YPA0BrxQUh0vALRXee8a6rhFD8iZrANd94GHjtTbgSTx9pjrbtZxS+zVKEYVizQOtAfvlespSQAC260bBB24A32S8CzgRAG1ITX4f4onvjKtGxSl7KlIKjHk4Z5Vtuwg8JH2Vfpc+AK5YisN4gYNRYIDDRnabmgZAO8AhyfUWOAYsWta+AseldYqSXglf/rz1O+yWJVsPAufFPgUeAj8DWTvUeH0rWp9QuWNUuo5mL/kP0DGjxXpsa29bEe1tkfRL13pNHWdbP3abaehj9fZWfcKE6oYNmsuofA3U5bzbm9Sm7DUHHNGgv0FwdqUdSohrAAAAAElFTkSuQmCC">
         </button>
       </td><td>
-        <button class="hand qrmodalbtn" onclick="fillModal('<?= getCurrentURL()."?".$code ?>')">
-          QR
+        <button title="QR Code" class="hand qrmodalbtn" onclick="fillModal('<?= getCurrentURL()."?".$code ?>')">
+          <img style="width:17px;; height:17px;;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAC4jAAAuIwF4pT92AAAAB3RJTUUH4wQMDSMoYJaWPAAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAEUSURBVEjHrVZBDsMwCMNT/v9l7zZVa8B2lEo9tEkAg3FAVbH0A7HOxx7HnrWRmz1s1una/JjBwUQKF+0akGBwsvuGkVF0jtOHJgckYtcZTgmVkis1fo1c9UDJhs1RgAiQQLA6QRyXhKK/p73bwDoj/Hu7ujNFvUTq0DhTJWJz9nduDTVHyGAKPjxbkKkUciBdFDDCPsSgXGyCwa3m79LM4eZ6ra3QGRvSTQi3ZUKTMgwZgPFfaThccpUIJuVDfYxDCIiHDdmoJHoSejZK5iray256SdCoser3+D52L4ASw2FNNXZIQ0MgeGPYS6fO0cYJ4mm+rkG1tsp1OuR1ASBlqnKoxqBorGKYzmTkae3hQP54YR1fF2eg3iq6MboAAAAASUVORK5CYII=">
         </button>
       </td><td>
         <form method="POST" onsubmit="return confirm('Are you sure you want to delete this shortened URL?\n\rThis might break existing links.');">
           <input type="hidden" name="delete" value="<?= $code ?>">
           <input type="hidden" name="csrf" value="<?= $token ?>">
-          <input type="submit" class="hand" value="&#128465;">
+          <button title="Delete" class="hand" type="submit">
+            <img style="width:17px;; height:17px;;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAC4jAAAuIwF4pT92AAAAB3RJTUUH4wQMDS802CKFfwAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAAPwSURBVEjHjZe/i11FFMc/3/NmF9HCSl1jElKoSzAqouLWYifY+YdYaxuwtxC10cbKSlER0qXyV2NASCHRBBJwUWLALcy++Vq8M/fNm7272QeX9+69M2fme77f853zJKmQH4mNjw22Q9JTwBu2L/Rj7fZbBmT7DnBF0u/AYR9rjI2khaQSoS1JJa+tvIrERYkPM5D7S5Jz0Xa/BD4HXsz525K2IrSIUInQdsaPArS9uO3KJrGwsDkDvADcA64CN9aIPSG2fdb265IuAWeB6xKHq6yhjF1b3CKhtmObMSEABXgI+BP4RNK3QOTiNQMuQHu2L+b4YlurjKAE5wSk3KwK+LzNm8ClXIQcIOAJ4OUM+KPE7ZYRJQ6voD8uac+2gJ+BO9JqXI7/D/hV4ivQDVJc7wC/jRwe5ZSR0yP347v+GXBT4t0IlcbxPeAgOYiZdCMpOV0T1nE83c+9y7kVOLC5u3okFduPAs9nSt8GXgJ+Ar4Ebre0S6qZ2eRYNcsogCqpZqojKXoL2AN+Ab4AfgCuRejvkgH/Aa7a/gt4LTfxB/C1pOuZCUvEKqiWmYgAiNAyf2ulcGx7N6vhFeAW8F2ErjWRRRNAqo/kgk5gzoxFCqV2wmvcxeQ5nub1sTS+D3uqX/Xu0gm2ABdsXs1JznLZtf0cOICwoVbvAue7yhidcAIVPVK7H2RSBE8D79n+wPa55PQR4GNJn4HO5LwdSZ/aft/2MwNSxvtoptHX5hq6moFszaQ/kXord1xSWIuZBYcKQaVDGil7dzY4cbguJ2pnHOoOiLky9Myi2Ct+fNzGTti5hnk+Ic6RE0rCJVNmoKYBqDODFmx6JxG1ujbHTNSdwWwgO27jUfqd2KdGrgeBa+fCjLIBXCSWGSg6a+sR9OgManU8ZUVCtVob8VMqPdeZAcM61X2NaQatT+C3zfUJGZksvD9rI92o51hekeceQc7W5qLWkKH+UHGf4nRJAYuSi47ltFIM1vqQ0Si4vt/adB9wgtOg6KkTiTk/HYWweczNls2siDoPNoi+24m+jUlEMaCLgai5VEtDG9myl6WmXqhARDurT0DxIGPwKQxm452NisQydTNaphJNba1tllMLeAjcl7SUoFYv89khsExjaUidGYmsgFo2m+11LXZiuQV8BDwpaT/RHACXgW3b+5KqpH3bl4G7wE1g5xjzmMppsbbMdfu5btj4F/h+aE3vS1zpAirRf9Oos9lpHOcp1lqlAKJ0xT/XNWimq9j4OzKa4mgUMzEtQeM4BrVu5X+lZ20Oxkm1TsjdKduSqHUq/IclnbO93XMsUYFlyUXbrmon+cfyOpan07S3rfsE5/fKrP4H5DR34OQwCnEAAAAASUVORK5CYII=">
+          </button>
         </form>
       </td><td>
-        <button>
-          <span class="timestamp"><?= $timestamp ?></span>
-        </button>
+        <input type="text" style="width:180px;" class="timestamp" value="<?= $timestamp ?>" disabled>
       </td></tr>
     </table>
     <br><br>
@@ -597,7 +637,7 @@
     header("X-Content-Type-Options: nosniff");
     header("X-Frame-Options: DENY");
     header("X-XSS-Protection: 1; mode=block");
-    header("Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'");
+    header("Content-Security-Policy: default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'");
 
     if(usingHTTPS()){
       header("Strict-Transport-Security: max-age=2592000");
@@ -624,6 +664,7 @@
   }
 
   function outputError($errorstrng,$goTo=false){ ?>
+    <br><br>
     <div style="text-align: center" class="hand">
       <button class="hand" style="height:150%;"
       <?php if($goTo===false){ ?>
@@ -632,6 +673,7 @@
           onclick="window.location.replace('?admin');"
       <?php  } ?>> <?= $errorstrng ?></button>
     </div>
+    <br><br>
     <?php
   }
 ?>
